@@ -14,6 +14,7 @@ df_comissao_vend = pd.read_csv('ComissaoVendedor.csv')  # Dados de Comissao dos 
 df_prods = pd.read_csv('ProdutosSafra.csv')  # Dados de Saida de Produtos por Safra
 df_map_clientes = pd.read_csv('MapaClientes.csv')  # Dados de Localização dos Clientes
 us_cities = pd.read_csv("https://raw.githubusercontent.com/plotly/datasets/master/us-cities-top-1k.csv") # Dataframe online
+df = pd.read_csv('MapaClientes.csv')
 
 # Comissão de Vendedores
 df_comissao_vend.rename(columns={'valor': 'VALOR', 'vendedor': 'VENDEDOR'}, inplace=True)
@@ -60,7 +61,7 @@ app.layout = html.Div(
             options=[
                 {'label': 'Itiquira', 'value': 'Itiquira'}
             ],
-            value=['Itiquira'],
+            value='Itiquira',
             placeholder='Seleciona um Estado',
             multi=False
         ),
@@ -87,13 +88,13 @@ def graf_receita_desp(dd_receita_despesa):
     [Input(component_id='dd_mapa_clientes', component_property='value')]
 )
 def graf_mapa_clientes(dd_mapa_clientes):
-    df_mapa_clientes = df_map_clientes.where('Cidade' == 'Itiquira')
+    df_mapa_clientes = df[df['Cidade' == dd_mapa_clientes]]
     fig_mapa_clientes = px.scatter_mapbox(df_mapa_clientes, lat="lat", lon="lon", hover_name="Cidade",
                                          hover_data=["Estado", "Populacao", "Cliente"],
                                          color_discrete_sequence=["fuchsia"], zoom=5, height=500)
-    # fig_mapa_clientes.update_layout(mapbox_style="open-street-map")
-    # fig_mapa_clientes.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
-    # fig_mapa_clientes.update_layout(title="Localização dos Clientes")
+    fig_mapa_clientes.update_layout(mapbox_style="open-street-map")
+    fig_mapa_clientes.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
+    fig_mapa_clientes.update_layout(title="Localização dos Clientes")
     return fig_mapa_clientes
 
 
