@@ -52,7 +52,7 @@ app.layout = html.Div(
                 {'label': 'Janice', 'value': 'Janice'},
                 {'label': 'Gabriel', 'value': 'Gabriel'}
             ],
-            value='Douglas',
+
             placeholder='Informe um Vendedor',
             multi=False
         ),
