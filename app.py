@@ -24,7 +24,8 @@ fig_comissao_vend.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
 
 # HISTOGRAMA - PRODUTOS POR SAFRA
 df_prods.rename(columns={'safra': 'SAFRA'}, inplace=True)
-fig_prods_safra = px.line(df_prods, x='SAFRA', y=df_prods.columns, title='Venda de Produtos')
+fig_prods_safra = px.line(df_prods, x='SAFRA', y=df_prods.columns, labels={'x':'SAFRA', 'y': 'TOTAL VENDA'}, title='Venda de Produtos')
+
 
 app = dash.Dash()
 app.layout = html.Div(
@@ -46,13 +47,14 @@ app.layout = html.Div(
         dcc.Dropdown(
             id='dd_comissao_vend',
             options=[
+                {'label': 'Todos', 'value': 'Todos'},
                 {'label': 'Wellen', 'value': 'Wellen'},
                 {'label': 'Douglas', 'value': 'Douglas'},
                 {'label': 'Adao', 'value': 'Adao'},
                 {'label': 'Janice', 'value': 'Janice'},
                 {'label': 'Gabriel', 'value': 'Gabriel'}
             ],
-
+            value='Todos',
             placeholder='Informe um Vendedor',
             multi=False
         ),
@@ -129,10 +131,12 @@ def graf_mapa_clientes(dd_mapa_clientes):
 )
 def graf_mapa_vendedores(dd_comissao_vend):
     df_comissao_vend.rename(columns={'valor': 'VALOR', 'vendedor': 'VENDEDOR'}, inplace=True)
-
     dfc = df_comissao_vend.filter(items=['VENDEDOR', 'VALOR', 'mes', 'produto'])
-    dfc2 = dfc.loc[dfc.VENDEDOR == dd_comissao_vend]
-
+    if(dd_comissao_vend != 'Todos'):
+        # dfc = df_comissao_vend.filter(items=['VENDEDOR', 'VALOR', 'mes', 'produto'])
+        dfc2 = dfc.loc[dfc.VENDEDOR == dd_comissao_vend]
+    else:
+        dfc2 = df_comissao_vend
     fig_comissao_vendedores = px.bar(dfc2, y='VALOR', x='VENDEDOR', text='VALOR', title='Comissão de Vendedores')
     fig_comissao_vendedores.update_traces(texttemplate='%{text:.2s}', textposition='outside')
     fig_comissao_vendedores.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
