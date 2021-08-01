@@ -5,12 +5,13 @@ import dash_core_components as dcc  # Components do Core
 import dash_html_components as html  # Elementos HTML
 import dash_bootstrap_components as dbc
 import pandas as pd  # Vai fazer a leitura do arquivo
+from apyori import apriori
 
 from dash.dependencies import Input, Output  # Utilizar isso para utilizar a callback
 # print(df.columns) - Imprimir as colunas do arquivo CSV
 
 df_rec_desp = pd.read_csv('ExcelReceitasDespesasMes.csv')  # Dados de Receitas e Despesas
-df_comissao_vend = pd.read_csv('ComissaoVendedor.csv')  # Dados de Comissao dos Vendedores
+df_comissao_vend = pd.read_csv('ComissaoVendedor.csv')  # Dados de Comissao dos VendedoresCaptura de tela de 2021-07-19 19-03-41
 df_prods = pd.read_csv('ProdutosSafra.csv')  # Dados de Saida de Produtos por Safra
 df_map_clientes = pd.read_csv('MapaClientes.csv')  # Dados de Localização dos Clientes
 us_cities = pd.read_csv("https://raw.githubusercontent.com/plotly/datasets/master/us-cities-top-1k.csv") # Dataframe online
@@ -26,6 +27,12 @@ fig_comissao_vend.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
 df_prods.rename(columns={'safra': 'SAFRA'}, inplace=True)
 fig_prods_safra = px.line(df_prods, x='SAFRA', y=df_prods.columns, labels={'x':'SAFRA', 'y': 'TOTAL VENDA'}, title='Venda de Produtos')
 
+# APYORI
+transactions = [
+    ['beer', 'nuts'],
+    ['beer', 'cheese'],
+]
+results = list(apriori(transactions))
 
 app = dash.Dash()
 app.layout = html.Div(
