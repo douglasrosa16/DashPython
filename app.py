@@ -5,17 +5,24 @@ import dash_core_components as dcc  # Components do Core
 import dash_html_components as html  # Elementos HTML
 import dash_bootstrap_components as dbc
 import pandas as pd  # Vai fazer a leitura do arquivo
-from apyori import apriori
+import numpy as np
+
+
+from sklearn import tree
+from sklearn.datasets import load_boston
+from sklearn.model_selection import cross_val_score
 
 from dash.dependencies import Input, Output  # Utilizar isso para utilizar a callback
 # print(df.columns) - Imprimir as colunas do arquivo CSV
 
+# Carregar os datasets
 df_rec_desp = pd.read_csv('ExcelReceitasDespesasMes.csv')  # Dados de Receitas e Despesas
-df_comissao_vend = pd.read_csv('ComissaoVendedor.csv')  # Dados de Comissao dos VendedoresCaptura de tela de 2021-07-19 19-03-41
+df_comissao_vend = pd.read_csv('ComissaoVendedor.csv')  # Dados de Comissao dos Vendedores
 df_prods = pd.read_csv('ProdutosSafra.csv')  # Dados de Saida de Produtos por Safra
 df_map_clientes = pd.read_csv('MapaClientes.csv')  # Dados de Localização dos Clientes
-us_cities = pd.read_csv("https://raw.githubusercontent.com/plotly/datasets/master/us-cities-top-1k.csv") # Dataframe online
+us_cities = pd.read_csv("https://raw.githubusercontent.com/plotly/datasets/master/us-cities-top-1k.csv")  # df online
 df = pd.read_csv('MapaClientes.csv')
+df_cli_pagador = pd.read_csv('cliente-pagador.csv')
 
 # Comissão de Vendedores
 df_comissao_vend.rename(columns={'valor': 'VALOR', 'vendedor': 'VENDEDOR'}, inplace=True)
@@ -25,25 +32,59 @@ fig_comissao_vend.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
 
 # HISTOGRAMA - PRODUTOS POR SAFRA
 df_prods.rename(columns={'safra': 'SAFRA'}, inplace=True)
-fig_prods_safra = px.line(df_prods, x='SAFRA', y=df_prods.columns, labels={'x':'SAFRA', 'y': 'TOTAL VENDA'}, title='Venda de Produtos')
+fig_prods_safra = px.line(df_prods, x='SAFRA', y=df_prods.columns, labels={'x': 'SAFRA', 'y': 'TOTAL VENDA'},
+                          title='Venda de Produtos por Safra')
 
-# APYORI
-transactions = [
-    ['beer', 'nuts'],
-    ['beer', 'cheese'],
-]
-results = list(apriori(transactions))
+# Arvore de Decisão
+# idCliente[0],valorContratado[1],prazo[2],classificacaoY[3]
+with open("cliente-pagador.csv") as file_name:
+    array = np.loadtxt(file_name, delimiter=",")
 
+print(array)
+"""
+coluna_prazo = df_cli_pagador.columns[2]
+array_prazo = coluna_prazo.split()
+
+coluna_vlr_contrato = df_cli_pagador.columns[2]
+array_vlr_contrato = coluna_vlr_contrato.split()
+
+print(array_vlr_contrato)
+print(array_prazo)
+"""
+"""
+X = df_cli_pagador.columns[2] # Prazo
+Y = df_cli_pagador.columns[1] # Valor Contratado
+
+# Definindo a árvore de decisão
+arvore = tree.DecisionTreeClassifier(criterion="entropy")
+
+# Construimos a árvore a partir do dataset - Treinando o algoritmo com os dados
+clienteArvore = arvore.fit(X, Y)
+
+# Fazer predição com os valores
+clienteArvore.predict(X, True)
+
+# Validando os dados
+scores = cross_val_score(arvore, X, Y, cv=10)
+# Irá retornar um array com 10 posições
+scores.mean() # Media do score
+"""
+"""SEGUNDO COMENTARIO
 app = dash.Dash()
+
 app.layout = html.Div(
     [
+        html.H1(
+            'Dashboard BI - Financeiro'
+        ),
+        html.Br(),
         dcc.Dropdown(
             id='dd_receita_despesa',
             options=[
                 {'label': 'Receitas', 'value': 'RECEITAS'},
                 {'label': 'Despesas', 'value': 'DESPESAS'}
             ],
-            value=['RECEITAS','DESPESAS'],
+            value=['RECEITAS', 'DESPESAS'],
             placeholder='Selecione uma opção',
             multi=True
         ),
@@ -68,9 +109,26 @@ app.layout = html.Div(
         dcc.Graph(
             id='fig_comissao_vendedores'
         ),
-        dcc.Graph(figure=fig_comissao_vend),
         html.Br(),
-        dcc.Graph(figure=fig_prods_safra),
+        dcc.Dropdown(
+            id='dd_produtos_safra',
+            options=[
+                {'label': 'Todos', 'value': 'Todos'},
+                {'label': 'Milho', 'value': 'Milho'},
+                {'label': 'Soja', 'value': 'Soja'},
+                {'label': 'Algodao', 'value': 'Algodao'},
+                {'label': 'Cana', 'value': 'Cana'},
+                {'label': 'Feijao', 'value': 'Feijao'},
+                {'label': 'Arroz', 'value': 'Arroz'}
+            ],
+            value='Todos',
+            placeholder='Escolha um Produto',
+            multi=False
+        ),
+        dcc.Graph(
+            id='fig_prods_safra'
+        ),
+        # dcc.Graph(figure=fig_prods_safra),
         html.Br(),
         dcc.Dropdown(
             id='dd_mapa_clientes',
@@ -91,9 +149,10 @@ app.layout = html.Div(
                 {'label': 'Castanheira', 'value': 'Castanheira'},
                 {'label': 'Tangara da Serra', 'value': 'Tangara da Serra'},
                 {'label': 'Sonora', 'value': 'Sonora'},
-                {'label': 'Mineiros', 'value': 'Mineiros'}
+                {'label': 'Mineiros', 'value': 'Mineiros'},
+                {'label': 'Todos', 'value': 'Todos'}
             ],
-            value='Rondonopolis', # Aqui poderia ser passado uma lista de cidades
+            value='Todos',  # Aqui poderia ser passado uma lista de cidades
             placeholder='Seleciona um Estado',
             multi=False
         ),
@@ -121,17 +180,21 @@ def graf_receita_desp(dd_receita_despesa):
 )
 def graf_mapa_clientes(dd_mapa_clientes):
     dfc = df.filter(items=['Cidade', 'Estado', 'Populacao', 'Cliente', 'lat', 'lon'])
-    dfc2 = dfc.loc[dfc.Cidade == dd_mapa_clientes]
+    if dd_mapa_clientes != 'Todos':
+        # dfc = df_comissao_vend.filter(items=['VENDEDOR', 'VALOR', 'mes', 'produto'])
+        dfc2 = dfc.loc[dfc.Cidade == dd_mapa_clientes]
+    else:
+        dfc2 = dfc
     #  dfc2 = df.loc[df['Cidade'].isin(dd_mapa_clientes)]  # Fazer assim para quando for uma lista de cidades
     fig_mapa_clientes = px.scatter_mapbox(dfc2, lat="lat", lon="lon", hover_name="Cidade",
-                                         hover_data=["Estado", "Populacao", "Cliente"],
+                                          hover_data=["Estado", "Populacao", "Cliente"],
                                          color_discrete_sequence=["fuchsia"], zoom=5, height=500)
     fig_mapa_clientes.update_layout(mapbox_style="open-street-map")
     fig_mapa_clientes.update_layout(margin={"r": 0, "t": 0, "l": 0, "b": 0})
     fig_mapa_clientes.update_layout(title="Localização dos Clientes")
     return fig_mapa_clientes
 
-#Filtro de Vendedores - Comissao
+# Filtro de Vendedores - Comissao
 @app.callback(
     Output(component_id='fig_comissao_vendedores', component_property='figure'),
     [Input(component_id='dd_comissao_vend', component_property='value')]
@@ -139,7 +202,7 @@ def graf_mapa_clientes(dd_mapa_clientes):
 def graf_mapa_vendedores(dd_comissao_vend):
     df_comissao_vend.rename(columns={'valor': 'VALOR', 'vendedor': 'VENDEDOR'}, inplace=True)
     dfc = df_comissao_vend.filter(items=['VENDEDOR', 'VALOR', 'mes', 'produto'])
-    if(dd_comissao_vend != 'Todos'):
+    if dd_comissao_vend != 'Todos':
         # dfc = df_comissao_vend.filter(items=['VENDEDOR', 'VALOR', 'mes', 'produto'])
         dfc2 = dfc.loc[dfc.VENDEDOR == dd_comissao_vend]
     else:
@@ -149,5 +212,22 @@ def graf_mapa_vendedores(dd_comissao_vend):
     fig_comissao_vendedores.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
     return fig_comissao_vendedores
 
+# Filtro de Produtos por Safra
+@app.callback(
+    Output(component_id='fig_prods_safra', component_property='figure'),
+    [Input(component_id='dd_produtos_safra', component_property='value')]
+)
+def graf_produtos_safra(dd_produtos_safra):
+    df_prods.rename(columns={'safra': 'SAFRA'}, inplace=True)
+    dfprods = df_prods.filter(items=['SAFRA'])
+    if dd_produtos_safra != 'Todos':
+        dfcprod2 = dfprods.loc(dfprods.SAFRA == dd_produtos_safra)
+    else:
+        dfcprod2 = dfprods
+    fig_prods_safra = px.line(dfcprod2, x='SAFRA', y=dd_produtos_safra, title='Venda de Produtos por Safra')
+    return fig_prods_safra
+
+
 app.run_server(debug=True, use_reloader=True)
 
+"""
