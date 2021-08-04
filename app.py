@@ -37,11 +37,22 @@ fig_prods_safra = px.line(df_prods, x='SAFRA', y=df_prods.columns, labels={'x': 
 
 # Arvore de Decisão
 # idCliente[0],valorContratado[1],prazo[2],classificacaoY[3]
-with open("cliente-pagador.csv") as file_name:
-    array = np.loadtxt(file_name, delimiter=",")
-
-print(array)
 """
+boston = load_boston()
+X = boston.data
+y = boston.target
+print(boston)
+reg = tree.DecisionTreeRegressor()
+bostonTree = reg.fit(X[:-50], y[:-50])
+bostonTree.predict(X[-50:])
+bostonTree.score(X[-50:], y[-50:])
+# scores das validações cruzadas
+allScores = cross_val_score(reg, X, y, cv=10)
+print(allScores)
+# média dos scores
+allScores.mean()
+"""
+
 coluna_prazo = df_cli_pagador.columns[2]
 array_prazo = coluna_prazo.split()
 
@@ -50,7 +61,7 @@ array_vlr_contrato = coluna_vlr_contrato.split()
 
 print(array_vlr_contrato)
 print(array_prazo)
-"""
+
 """
 X = df_cli_pagador.columns[2] # Prazo
 Y = df_cli_pagador.columns[1] # Valor Contratado
