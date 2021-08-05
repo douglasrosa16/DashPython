@@ -6,8 +6,8 @@ import dash_html_components as html  # Elementos HTML
 import dash_bootstrap_components as dbc
 import pandas as pd  # Vai fazer a leitura do arquivo
 import numpy as np
-
-
+import matplotlib.pyplot as plt
+from sklearn.tree import DecisionTreeClassifier
 from sklearn import tree
 from sklearn.datasets import load_boston
 from sklearn.model_selection import cross_val_score
@@ -36,8 +36,43 @@ fig_prods_safra = px.line(df_prods, x='SAFRA', y=df_prods.columns, labels={'x': 
                           title='Venda de Produtos por Safra')
 
 # Arvore de Decisão
-# idCliente[0],valorContratado[1],prazo[2],classificacaoY[3]
-"""
+atributos = ['Contratado','Prazo','Pagador']
+# valorContratado[1],prazo[2],classificacaoY[3]
+# Critérios: Bom = valor baixo(1000) e varios dias (60)
+# Critérios: Regular = valor medio e varios dias
+# Critérios: Ruim = valor alto e poucos dias
+
+X_arvore_dados=[[2024,2],[6292,39],[3414,54],[5260,60],[3058,12],[5385,47],[7236,43],[5932,28],[4573,23],[3385,40],
+                [3520,46],[9469,57],[1100,11],[8560,52],[2732,11],[3014,25],[8647,0],[9280,20],[8388,48],[5967,19],
+                [6250,38],[6647,44],[4096,20],[6641,52],[2235,18],[8529,57],[202,76],[7981,10],[9160,49],[817,76],
+                [8791,47],[7752,38],[4670,23],[6655,60],[7128,50],[527,96],[215,72],[6525,19],[8260,36],[5932,26],
+                [4804,32],[2885,55],[6356,30],[457,62],[7750,16],[3521,34],[4654,49],[577,116],[8971,17],[9377,26],
+                [6916,20],[6308,6],[4027,41],[1390,24],[7861,32],[8186,11],[5659,21],[9671,54],[8103,51],[7801,26],
+                [2249,58],[4616,4],[8246,28],[4105,14],[9837,35],[3082,12],[628,92],[8042,30],[9805,24],[1683,29],
+                [2248,54],[371,66],[7703,26],[4310,2],[7946,36],[7765,52],[6931,11],[1883,50],[6995,12],[3826,6],
+                [4573,1],[9939,52],[5445,52],[4023,22],[4779,26],[5174,29],[5408,54],[8377,27],[7711,56],[2557,14],
+                [3738,25],[2384,40],[1155,31],[967,78]]
+Y_arvore_classe = ['regular','ruim','regular','ruim','regular','ruim','ruim','ruim','ruim','regular','regular','ruim',
+                   'regular','ruim','regular','regular','ruim','ruim','ruim','ruim','ruim','ruim','ruim','ruim','regular',
+                   'ruim','bom','ruim','ruim','bom','ruim','ruim','ruim','ruim','ruim','bom','bom','ruim','ruim','ruim',
+                   'ruim','regular','ruim','bom','ruim','regular','ruim','bom','ruim','ruim','ruim','ruim','ruim','regular',
+                   'ruim','ruim','ruim','ruim','ruim','ruim','regular','ruim','ruim','ruim','ruim','regular','bom','ruim',
+                   'ruim','regular','regular','bom','ruim','ruim','ruim','ruim','ruim','regular','ruim','regular','ruim',
+                   'ruim','ruim','ruim','ruim','ruim','ruim','ruim','ruim','regular','regular','regular','regular','bom']
+
+previsores = ['valorContratado','prazo']
+# Arvore de Decisão
+arvore_check_pagador = DecisionTreeClassifier(criterion='entropy')
+# Treinamento
+arvore_check_pagador.fit(X_arvore_dados, Y_arvore_classe)
+figure, eixos = plt.subplots(nrows=1, ncols=1, figsize=(10,10))
+print(tree.plot_tree(arvore_check_pagador, feature_names=previsores, class_names=arvore_check_pagador.classes_, filled=True))
+
+scores = cross_val_score(arvore_check_pagador, X_arvore_dados, Y_arvore_classe, cv=10)
+# Irá retornar um array com 10 posições
+scores.mean() # Media do score
+
+"""EXEMPLO
 boston = load_boston()
 X = boston.data
 y = boston.target
@@ -52,15 +87,6 @@ print(allScores)
 # média dos scores
 allScores.mean()
 """
-
-coluna_prazo = df_cli_pagador.columns[2]
-array_prazo = coluna_prazo.split()
-
-coluna_vlr_contrato = df_cli_pagador.columns[2]
-array_vlr_contrato = coluna_vlr_contrato.split()
-
-print(array_vlr_contrato)
-print(array_prazo)
 
 """
 X = df_cli_pagador.columns[2] # Prazo
