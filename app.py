@@ -11,7 +11,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn import tree
 from sklearn.datasets import load_boston
 from sklearn.model_selection import cross_val_score
-
+import io
+import base64
 from dash.dependencies import Input, Output  # Utilizar isso para utilizar a callback
 # print(df.columns) - Imprimir as colunas do arquivo CSV
 
@@ -71,42 +72,7 @@ print(tree.plot_tree(arvore_check_pagador, feature_names=previsores, class_names
 scores = cross_val_score(arvore_check_pagador, X_arvore_dados, Y_arvore_classe, cv=10)
 # Irá retornar um array com 10 posições
 scores.mean() # Media do score
-
-"""EXEMPLO
-boston = load_boston()
-X = boston.data
-y = boston.target
-print(boston)
-reg = tree.DecisionTreeRegressor()
-bostonTree = reg.fit(X[:-50], y[:-50])
-bostonTree.predict(X[-50:])
-bostonTree.score(X[-50:], y[-50:])
-# scores das validações cruzadas
-allScores = cross_val_score(reg, X, y, cv=10)
-print(allScores)
-# média dos scores
-allScores.mean()
-"""
-
-"""
-X = df_cli_pagador.columns[2] # Prazo
-Y = df_cli_pagador.columns[1] # Valor Contratado
-
-# Definindo a árvore de decisão
-arvore = tree.DecisionTreeClassifier(criterion="entropy")
-
-# Construimos a árvore a partir do dataset - Treinando o algoritmo com os dados
-clienteArvore = arvore.fit(X, Y)
-
-# Fazer predição com os valores
-clienteArvore.predict(X, True)
-
-# Validando os dados
-scores = cross_val_score(arvore, X, Y, cv=10)
-# Irá retornar um array com 10 posições
-scores.mean() # Media do score
-"""
-"""SEGUNDO COMENTARIO
+plt.show()
 app = dash.Dash()
 
 app.layout = html.Div(
@@ -114,6 +80,7 @@ app.layout = html.Div(
         html.H1(
             'Dashboard BI - Financeiro'
         ),
+
         html.Br(),
         dcc.Dropdown(
             id='dd_receita_despesa',
@@ -147,25 +114,7 @@ app.layout = html.Div(
             id='fig_comissao_vendedores'
         ),
         html.Br(),
-        dcc.Dropdown(
-            id='dd_produtos_safra',
-            options=[
-                {'label': 'Todos', 'value': 'Todos'},
-                {'label': 'Milho', 'value': 'Milho'},
-                {'label': 'Soja', 'value': 'Soja'},
-                {'label': 'Algodao', 'value': 'Algodao'},
-                {'label': 'Cana', 'value': 'Cana'},
-                {'label': 'Feijao', 'value': 'Feijao'},
-                {'label': 'Arroz', 'value': 'Arroz'}
-            ],
-            value='Todos',
-            placeholder='Escolha um Produto',
-            multi=False
-        ),
-        dcc.Graph(
-            id='fig_prods_safra'
-        ),
-        # dcc.Graph(figure=fig_prods_safra),
+        dcc.Graph(figure=fig_prods_safra),
         html.Br(),
         dcc.Dropdown(
             id='dd_mapa_clientes',
@@ -249,22 +198,4 @@ def graf_mapa_vendedores(dd_comissao_vend):
     fig_comissao_vendedores.update_layout(uniformtext_minsize=8, uniformtext_mode='hide')
     return fig_comissao_vendedores
 
-# Filtro de Produtos por Safra
-@app.callback(
-    Output(component_id='fig_prods_safra', component_property='figure'),
-    [Input(component_id='dd_produtos_safra', component_property='value')]
-)
-def graf_produtos_safra(dd_produtos_safra):
-    df_prods.rename(columns={'safra': 'SAFRA'}, inplace=True)
-    dfprods = df_prods.filter(items=['SAFRA'])
-    if dd_produtos_safra != 'Todos':
-        dfcprod2 = dfprods.loc(dfprods.SAFRA == dd_produtos_safra)
-    else:
-        dfcprod2 = dfprods
-    fig_prods_safra = px.line(dfcprod2, x='SAFRA', y=dd_produtos_safra, title='Venda de Produtos por Safra')
-    return fig_prods_safra
-
-
 app.run_server(debug=True, use_reloader=True)
-
-"""
